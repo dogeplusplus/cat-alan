@@ -8,6 +8,10 @@ repos:
     -   id: trailing-whitespace
     -   id: requirements-txt-fixer
     -   id: detect-private-key
+-   repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: ''
+    hooks:
+    -   id: autopep8
 -   repo: https://github.com/pycqa/flake8
     rev: ''
     hooks:
