@@ -1,7 +1,7 @@
-- [ ] Figure out how to use the torch data loader for audio
+- [x] Figure out how to use the torch data loader for audio
 - [ ] Implement M5 model with bells and whistles
 - [ ] Create training/evaluation script
 - [ ] Add ml-flow tracking
 - [ ] Add some unit tests
-
-
+- [x] Figure out how to pad audio to make it uniform
+- [ ] Implement repeat padding for varying length audios for collate_fn
