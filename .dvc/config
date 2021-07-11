@@ -1,2 +1,4 @@
+[core]
+    remote = woof-meow
 ['remote "woof-meow"']
     url = gdrive://1w5NbF9s2Fuf3wuAMKsPKOx_9Prr-c8So/woof-meow
