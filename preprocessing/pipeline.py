@@ -1,16 +1,17 @@
 from torch.utils.data import DataLoader, Dataset
-import matplotlib.pyplot as plt
 import os
 import glob
 import torch
 import torchaudio
-import matplotlib
-matplotlib.use("TkAgg")
 
 
 class SoundDataset(Dataset):
     def __init__(self, sound_dir):
         self.sound_dir = sound_dir
+        self.classes = {
+            x: i for i, x in enumerate(os.listdir(sound_dir))
+        }
+
         self.files = glob.glob(os.path.join(
             self.sound_dir, "**/*.wav"), recursive=True)
 
@@ -21,29 +22,29 @@ class SoundDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        waveform, sample_rate = torchaudio.load(self.files[idx])
-        return waveform
+        class_name = os.path.basename(os.path.dirname(self.files[idx]))
+        label = self.classes[class_name]
+        waveform, _ = torchaudio.load(self.files[idx])
+        return waveform, label
 
 
 def collate_fn(wavs):
     max_len = max([w.shape[-1] for w in wavs])
-    features = torch.zeros((len(wavs), max_len))
+    features = torch.zeros((len(wavs), 1, max_len))
 
     for i, wav in enumerate(wavs):
-        features[i, :wav.shape[-1]] = wav
+        features[i, 0, :wav.shape[-1]] = wav
 
     return features
 
 
-if __name__ == "__main__":
-    sound_dir = "/mnt/c/Users/Albert/Downloads/archive"
-    ds = SoundDataset(sound_dir)
+def load_dataset(sound_dir, batch_size=2):
+    train_set = SoundDataset(f"{sound_dir}/train")
+    test_set = SoundDataset(f"{sound_dir}/test")
 
-    data_generator = DataLoader(ds, batch_size=2, collate_fn=collate_fn)
+    train_dataset = DataLoader(
+        train_set, batch_size=batch_size, collate_fn=collate_fn)
+    test_dataset = DataLoader(
+        test_set, batch_size=batch_size, collate_fn=collate_fn)
 
-    lengths = []
-    for x in data_generator:
-        lengths.append(x.numpy().size)
-
-    plt.hist(lengths)
-    plt.show()
+    return train_dataset, test_dataset

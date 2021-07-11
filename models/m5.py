@@ -5,7 +5,8 @@ class M5(nn.Module):
     def __init__(self,
                  kernel_sizes=[80, 3, 3, 3],
                  filters=[128, 128, 256, 512],
-                 strides=[4, 1, 1, 1]):
+                 strides=[4, 1, 1, 1],
+                 num_classes=2):
 
         super(M5, self).__init__()
         assert len(kernel_sizes) == len(
@@ -16,6 +17,7 @@ class M5(nn.Module):
         self.kernel_sizes = kernel_sizes
         self.filters = filters
         self.strides = strides
+        self.num_classes = num_classes
 
         self.model = nn.Sequential(
             nn.Conv1d(1,
@@ -46,7 +48,7 @@ class M5(nn.Module):
             nn.BatchNorm1d(self.filters[3]),
             nn.ReLU(),
             nn.MaxPool1d(4),
-            nn.AdaptiveAvgPool1d(1),
+            nn.AdaptiveAvgPool2d((1, self.num_classes)),
             nn.Softmax(),
         )
 
