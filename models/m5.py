@@ -4,8 +4,8 @@ import torch.nn as nn
 class M5(nn.Module):
     def __init__(self,
                  kernel_sizes=[80, 3, 3, 3],
-                 filters=[128, 128, 256, 512],
-                 strides=[4, 1, 1, 1],
+                 filters=[16, 16, 32, 64],
+                 strides=[16, 1, 1, 1],
                  num_classes=2):
 
         super(M5, self).__init__()
@@ -48,9 +48,14 @@ class M5(nn.Module):
             nn.BatchNorm1d(self.filters[3]),
             nn.ReLU(),
             nn.MaxPool1d(4),
-            nn.AdaptiveAvgPool2d((1, self.num_classes)),
-            nn.Softmax(),
         )
+        self.fc = nn.Linear(self.filters[3], self.num_classes)
+        self.log_softmax = nn.LogSoftmax(self.num_classes)
 
     def forward(self, x):
-        return self.model(x)
+        x = self.model(x)
+        x = nn.AvgPool1d(x.shape[-1])(x)
+        x = x.permute(0, 2, 1)
+        x = self.fc(x)
+        x = self.log_softmax(x)
+        return x

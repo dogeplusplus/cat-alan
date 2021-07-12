@@ -7,3 +7,4 @@
 - [ ] Implement repeat padding for varying length audios for collate_fn
 - [x] Make cross entropy work with the labels
 - [ ] Figure out why the model isn't training
+- [x] Try out original M5 implementatiot
