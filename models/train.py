@@ -1,3 +1,4 @@
+import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -6,26 +7,24 @@ from models.m5 import M5
 from preprocessing.pipeline import load_dataset
 
 
-def main(sound_dir, model, epochs=5):
+def main(sound_dir, model, epochs=5, print_every=5):
     train_ds, test_ds = load_dataset(sound_dir)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
-    size = len(train_ds)
     for e in range(epochs):
-        for i, batch in enumerate(train_ds):
-            import pdb
-            pdb.set_trace()
-            predictions = model(batch)
-            loss = loss_fn(predictions, torch.zeros_like(predictions))
-
+        pbar = tqdm.tqdm(train_ds, desc=f"Epoch {e}")
+        for i, batch in enumerate(pbar):
+            wavs, labels = batch
             optimizer.zero_grad()
-            loss.backwards()
+            predictions = model(wavs)
+            loss = loss_fn(torch.squeeze(predictions), labels)
+
+            loss.backward()
             optimizer.step()
 
-            if batch % 100 == 0:
-                loss, current = loss.item(),  i * len(batch)
-                print(f"Loss: {loss:>7f}, [{current:>5d}/{size:>5d}]")
+            if i % print_every == 0:
+                pbar.set_postfix(dict(loss=f"{loss.item():>7f}"))
 
 
 if __name__ == "__main__":

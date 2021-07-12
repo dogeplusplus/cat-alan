@@ -29,13 +29,15 @@ class SoundDataset(Dataset):
 
 
 def collate_fn(wavs):
-    max_len = max([w.shape[-1] for w in wavs])
+    max_len = max([w[0].shape[-1] for w in wavs])
+
+    labels = torch.LongTensor([w[1] for w in wavs])
     features = torch.zeros((len(wavs), 1, max_len))
 
-    for i, wav in enumerate(wavs):
+    for i, (wav, _) in enumerate(wavs):
         features[i, 0, :wav.shape[-1]] = wav
 
-    return features
+    return features, labels
 
 
 def load_dataset(sound_dir, batch_size=2):
