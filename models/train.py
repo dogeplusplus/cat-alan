@@ -22,6 +22,7 @@ def main(sound_dir, model, epochs=5, print_every=5,
     for e in range(epochs):
         # Train loop
         running_loss = 0
+        running_correct = 0
         samples = 0
         train_bar = tqdm.tqdm(
             train_ds,
@@ -34,10 +35,14 @@ def main(sound_dir, model, epochs=5, print_every=5,
 
             optimizer.zero_grad()
             predictions = model(wavs)
+            class_predictions = torch.squeeze(
+                torch.argmax(predictions, dim=-1))
             loss = loss_fn(predictions[:, 0], labels)
+
             loss.backward()
             optimizer.step()
 
+            running_correct += (class_predictions == labels).float().sum()
             running_loss += loss
             samples += labels.shape[0]
 
@@ -45,11 +50,13 @@ def main(sound_dir, model, epochs=5, print_every=5,
                 train_bar.set_postfix(dict(loss=f"{running_loss/samples:>7f}"))
 
         mlflow.log_metric("train_loss", float(running_loss) / samples, step=e)
+        mlflow.log_metric("train_accuracy", float(running_correct) / samples)
 
         # Test loop
         with torch.no_grad():
             running_loss = 0
             samples = 0
+            running_correct = 0
             test_bar = tqdm.tqdm(
                 test_ds,
                 desc=f"Test  Epoch {e}",
@@ -58,9 +65,13 @@ def main(sound_dir, model, epochs=5, print_every=5,
             for i, batch in enumerate(test_bar):
                 wavs, labels = batch
                 wavs, labels = wavs.to(device), labels.to(device)
+
                 predictions = model(wavs)
+                class_predictions = torch.squeeze(
+                    torch.argmax(predictions, dim=-1))
                 loss = loss_fn(predictions[:, 0], labels)
 
+                running_correct += (class_predictions == labels).float().sum()
                 running_loss += loss
                 samples += labels.shape[0]
 
@@ -69,6 +80,7 @@ def main(sound_dir, model, epochs=5, print_every=5,
                         dict(loss=f"{running_loss/samples:>7f}"))
 
         mlflow.log_metric("test_loss", float(running_loss) / samples, step=e)
+        mlflow.log_metric("test_accuracy", float(running_correct) / samples)
 
         if (e + 1) % save_every == 0:
             mlflow.pytorch.log_model(model, "model")

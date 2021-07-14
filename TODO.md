@@ -10,3 +10,7 @@
 - [x] Try out original M5 implementatiot
 - [x] Add progress bar for training
 - [ ] Address overfitting of the model on training set
+- [ ] Test my implementation with the existing dataset
+- [x] Download meow audio from Audioset
+- [ ] Investigate models that use the same training data and check their performance
+- [x] Log training and validation accuracy of the model in mlflow
