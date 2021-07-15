@@ -50,7 +50,7 @@ class M5(nn.Module):
             nn.MaxPool1d(4),
         )
         self.fc = nn.Linear(self.filters[3], self.num_classes)
-        self.log_softmax = nn.LogSoftmax(self.num_classes)
+        self.log_softmax = nn.LogSoftmax(dim=-1)
 
     def forward(self, x):
         x = self.model(x)
