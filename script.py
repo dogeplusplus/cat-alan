@@ -1,4 +1,3 @@
-import tqdm
 import torchaudio
 import torch
 from torchaudio.datasets import SPEECHCOMMANDS
@@ -6,8 +5,11 @@ import os
 import torch.optim as optim
 import torch.nn.functional as F
 
+from tqdm import tqdm
 
-from model.m5 import M5
+from models.m5 import M5
+
+device = "cuda"
 
 
 class SubsetSC(SPEECHCOMMANDS):
@@ -67,8 +69,8 @@ def collate_fn(batch):
 
 
 batch_size = 4
-num_workers = 0
-pin_memory = False
+num_workers = 1
+pin_memory = True
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -108,19 +110,17 @@ def train(model, epoch, log_interval):
         optimizer.step()
 
         # print training stats
-        if batch_idx % log_interval == 0:
-            print(f"Train Epoch: {epoch} \
-                    [{batch_idx * len(data)}/{len(train_loader.dataset)} \
-                    ({100. * batch_idx / len(train_loader):.0f}%)]\t \
-                    Loss: {loss.item():.6f}")
+        # if batch_idx % log_interval == 0:
 
         # update progress bar
-        pbar.update(pbar_update)
+        # pbar.update(pbar_update)
+        pbar.set_postfix(dict(loss=loss.item()))
         # record loss
         losses.append(loss.item())
 
 
-model = M5
+model = M5(num_classes=35)
+model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 # reduce the learning after 20 epochs by a factor of 10
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
@@ -128,10 +128,9 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 log_interval = 20
 n_epoch = 2
 
-pbar_update = 1 / (len(train_loader) + len(test_loader))
+# pbar_update = 1 / (len(train_loader) + len(test_loader))
 losses = []
 
-device = "cpu"
 new_sample_rate = 8000
 transform = torchaudio.transforms.Resample(
     orig_freq=sample_rate, new_freq=new_sample_rate)
