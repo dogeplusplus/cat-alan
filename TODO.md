@@ -14,3 +14,4 @@
 - [x] Download meow audio from Audioset
 - [ ] Investigate models that use the same training data and check their performance
 - [x] Log training and validation accuracy of the model in mlflow
+- [ ] Run some data analysis on the audioset dataset
