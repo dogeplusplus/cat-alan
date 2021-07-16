@@ -12,7 +12,9 @@
 - [ ] Address overfitting of the model on training set
 - [x] Test my implementation with the existing dataset
 - [x] Download meow audio from Audioset
-- [ ] Look at models that use the Cat Dog dataset
+- [x] Look at models that use the Cat Dog dataset
 - [x] Log training and validation accuracy of the model in mlflow
 - [ ] Run some data analysis on the audioset dataset
 - [x] Obtain CatSoundv2 dataset
+- [ ] Create another training pipeline that uses spectrograms instead
+- [ ] Create inference script
