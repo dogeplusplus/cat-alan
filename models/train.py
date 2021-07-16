@@ -41,7 +41,6 @@ def main(sound_dir, model, epochs=5, print_every=5,
 
             loss.backward()
             optimizer.step()
-
             running_correct += (class_predictions == labels).float().sum()
             running_loss += loss
             samples += labels.shape[0]
@@ -70,7 +69,6 @@ def main(sound_dir, model, epochs=5, print_every=5,
                 class_predictions = torch.squeeze(
                     torch.argmax(predictions, dim=-1))
                 loss = loss_fn(predictions[:, 0], labels)
-
                 running_correct += (class_predictions == labels).float().sum()
                 running_loss += loss
                 samples += labels.shape[0]
@@ -87,10 +85,11 @@ def main(sound_dir, model, epochs=5, print_every=5,
 
 
 if __name__ == "__main__":
-    sound_dir = "data/cats_dogs"
+    # sound_dir = "data/cats_dogs"
+    sound_dir = "data/CatSound"
 
     with mlflow.start_run() as run:
-        model = M5()
+        model = M5(filters=[64, 64, 128, 128], num_classes=10)
         model.to(device)
 
         main(sound_dir, model, epochs=100, batch_size=4)

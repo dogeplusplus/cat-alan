@@ -7,7 +7,7 @@
 - [ ] Implement repeat padding for varying length audios for collate_fn
 - [x] Make cross entropy work with the labels
 - [x] Figure out why the model isn't training
-- [x] Try out original M5 implementatiot
+- [x] Try out original M5 implementation
 - [x] Add progress bar for training
 - [ ] Address overfitting of the model on training set
 - [x] Test my implementation with the existing dataset
@@ -18,3 +18,5 @@
 - [x] Obtain CatSoundv2 dataset
 - [ ] Create another training pipeline that uses spectrograms instead
 - [ ] Create inference script
+- [x] Train classifier on cat sound dataset
+- [ ] Refactor everything so less side logic
