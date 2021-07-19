@@ -1,5 +1,9 @@
+import os
+import uuid
 import tqdm
+import json
 import torch
+import argparse
 import torch.nn as nn
 import torch.optim as optim
 import mlflow
@@ -8,12 +12,20 @@ import mlflow.pytorch
 from models.m5 import M5
 from preprocessing.pipeline import load_dataset
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+DEFAULTS = dict(
+    model_name=uuid.uuid4(),
+    kernel_sizes=[80, 3, 3, 3],
+    filters=[64, 64, 128, 128],
+    strides=[16, 1, 1, 1],
+    epochs=10,
+    batch_size=2,
+)
 
 
-def main(sound_dir, model, epochs=5, print_every=5,
-         save_every=5, batch_size=2):
-    train_ds, test_ds = load_dataset(sound_dir, batch_size)
+def train(dataset_path, model, epochs, batch_size, device,
+          print_every=5, save_every=5):
+
+    train_ds, test_ds = load_dataset(dataset_path, batch_size)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
@@ -89,12 +101,45 @@ def main(sound_dir, model, epochs=5, print_every=5,
             mlflow.pytorch.log_model(model, "model")
 
 
-if __name__ == "__main__":
-    # sound_dir = "data/cats_dogs"
-    sound_dir = "data/CatSound"
+def parse_arguments():
+    parser = argparse.ArgumentParser("Train audio classification model.")
+    parser.add_argument("-c", "--config", type=str,
+                        help="Path to training config")
 
-    with mlflow.start_run() as run:
-        model = M5(filters=[64, 64, 128, 128], num_classes=10)
+    args = parser.parse_args()
+    with open(args.config) as f:
+        args = json.load(f)
+
+    return args
+
+
+def main(args):
+    args = parse_arguments()
+    dataset_path = args["dataset_path"]
+
+    for parameter, default in DEFAULTS.items():
+        if parameter not in args:
+            args[parameter] = DEFAULTS[parameter]
+
+    num_classes = 0
+    for maybe_class in os.listdir(dataset_path):
+        if os.path.isdir(os.path.join(dataset_path, maybe_class)):
+            num_classes += 1
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    with mlflow.start_run():
+        model = M5(
+            filters=args["filters"],
+            kernel_sizes=args["kernel_sizes"],
+            strides=args["strides"],
+            num_classes=num_classes
+        )
+        mlflow.log_dict(args, "config.json")
         model.to(device)
+        train(dataset_path, model, args["epochs"], args["batch_size"], device)
 
-        main(sound_dir, model, epochs=100, batch_size=4)
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    main(args)

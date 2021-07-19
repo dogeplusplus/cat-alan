@@ -23,3 +23,4 @@
 - [x] Ensure no data leakage in the validation set with the augmented cat sounds
 - [x] Check what augmentation is being applied to the audio
 - [x] Re-implement data augmentation with librosa
+- [ ] GPU in data pipeline underutilised, optimise this in some way
