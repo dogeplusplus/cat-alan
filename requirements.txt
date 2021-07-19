@@ -1,3 +1,4 @@
+audiomentations
 matplotlib
 mlflow[extras]
 pre-commit

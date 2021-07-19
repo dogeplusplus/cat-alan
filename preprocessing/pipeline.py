@@ -1,18 +1,21 @@
-from torch.utils.data import DataLoader, Dataset, random_split
 import os
 import glob
 import torch
 import torchaudio
 
+from torch.utils.data import DataLoader, Dataset, random_split
+from audiomentations import Compose, TimeStretch, PitchShift, AddGaussianNoise
+
 
 class SoundDataset(Dataset):
-    def __init__(self, sound_dir):
+    def __init__(self, sound_dir, transforms=None):
         self.sound_dir = sound_dir
         self.classes = {
             x: i for i, x in enumerate(os.listdir(sound_dir))
         }
 
         self.files = []
+        self.transforms = transforms
 
         for ext in ("wav", "mp3"):
             self.files.extend(glob.glob(os.path.join(
@@ -32,6 +35,11 @@ class SoundDataset(Dataset):
         # Convert to mono
         if waveform.shape[0] == 2:
             waveform = torch.mean(waveform, axis=0, keepdim=True)
+
+        # Run augmentations
+        if self.transforms:
+            waveform = self.transforms(waveform)
+
         return waveform, label
 
 
@@ -48,8 +56,14 @@ def collate_fn(wavs):
 
 
 def load_dataset(sound_dir, batch_size=2, train_ratio=0.8):
+    augmentations = Compose([
+        TimeStretch(0.81, 1.23, p=0.5),
+        PitchShift(-2, 2, p=0.5),
+        AddGaussianNoise(0.001, 0.015, p=0.5),
+    ])
+
     if os.listdir(sound_dir) == ["test", "train"]:
-        train_set = SoundDataset(f"{sound_dir}/train")
+        train_set = SoundDataset(f"{sound_dir}/train", augmentations)
         test_set = SoundDataset(f"{sound_dir}/test")
     else:
         dataset = SoundDataset(sound_dir)

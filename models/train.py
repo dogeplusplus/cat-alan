@@ -46,7 +46,10 @@ def main(sound_dir, model, epochs=5, print_every=5,
             samples += labels.shape[0]
 
             if i % print_every == 0:
-                train_bar.set_postfix(dict(loss=f"{running_loss/samples:>7f}"))
+                train_bar.set_postfix(dict(
+                    loss=f"{running_loss/samples:>7f}",
+                    accuracy=f"{running_correct/samples:>7f}",
+                ))
 
         mlflow.log_metric("train_loss", float(running_loss) / samples, step=e)
         mlflow.log_metric("train_accuracy", float(running_correct) / samples)
@@ -74,8 +77,10 @@ def main(sound_dir, model, epochs=5, print_every=5,
                 samples += labels.shape[0]
 
                 if i % print_every == 0:
-                    test_bar.set_postfix(
-                        dict(loss=f"{running_loss/samples:>7f}"))
+                    test_bar.set_postfix(dict(
+                        loss=f"{running_loss/samples:>7f}",
+                        accuracy=f"{running_correct/samples:>7f}"
+                    ))
 
         mlflow.log_metric("test_loss", float(running_loss) / samples, step=e)
         mlflow.log_metric("test_accuracy", float(running_correct) / samples)
