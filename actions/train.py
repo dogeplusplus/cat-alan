@@ -117,7 +117,7 @@ def main(args):
     args = parse_arguments()
     dataset_path = args["dataset_path"]
 
-    for parameter, default in DEFAULTS.items():
+    for parameter in DEFAULTS.keys():
         if parameter not in args:
             args[parameter] = DEFAULTS[parameter]
 
