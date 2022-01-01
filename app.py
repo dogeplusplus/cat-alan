@@ -9,11 +9,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 
+device = "cpu"
 model_path = "examples/model"
 model = mlflow.pytorch.load_model(model_path)
 # Switch off dropout
 model.eval()
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
 classes = {
     0: "Happy",
