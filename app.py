@@ -41,25 +41,37 @@ def predict(model, audio):
 
 st.title("Meow Sentiment Analysis")
 st.sidebar.subheader("Provide Audio or Video file")
-uploaded_video = st.sidebar.file_uploader("Video Path", type=["mp4"])
+uploaded_file = st.sidebar.file_uploader("File Path", type=["mp4", "mp3", "wav"])
 
+left, right = st.columns([2, 1])
 
-raw_bytes = uploaded_video.read()
+if uploaded_file is not None:
+    raw_bytes = uploaded_file.read()
 
-with TemporaryDirectory() as temp_dir:
-    temp_video_path = Path(temp_dir, "temp_video.mp4")
-    with open(temp_video_path, "wb") as f:
-        f.write(raw_bytes)
+    extension = Path(uploaded_file.name).suffix
 
-    video_object = mp.VideoFileClip(str(temp_video_path))
-    audio_data = video_object.audio
-    temp_audio_path = Path(temp_dir, "temp_audio.wav")
-    audio_data.write_audiofile(temp_audio_path)
-    audio, sr = torchaudio.load(temp_audio_path)
+    with TemporaryDirectory() as temp_dir:
+        # Serialize to video with moviepy, extract audio and then save the audio file
+        if extension == ".mp4":
+            temp_video_path = Path(temp_dir, "temp_video.mp4")
+            with open(temp_video_path, "wb") as f:
+                f.write(raw_bytes)
+
+            video_object = mp.VideoFileClip(str(temp_video_path))
+            audio_data = video_object.audio
+            temp_audio_path = Path(temp_dir, "temp_audio.wav")
+            audio_data.write_audiofile(temp_audio_path)
+            video_widget = right.video(raw_bytes)
+        else:
+            # Save the audio file so we can access the array data
+            temp_audio_path = Path(temp_dir, f"temp_audio{extension}")
+            with open(temp_audio_path, "wb") as f:
+                f.write(raw_bytes)
+            audio_widget = right.audio(raw_bytes)
+        audio, _ = torchaudio.load(temp_audio_path)
+
     model_input = preprocess_audio(audio)
-
     probabilities = predict(model, model_input)
-
 
     fig, ax = plt.subplots()
     sorted_pairs = sorted(zip(classes.values(), probabilities), key=lambda x: x[1])
@@ -68,8 +80,7 @@ with TemporaryDirectory() as temp_dir:
     ax.barh(class_axis, label_axis)
     ax.set_xlabel("Probability")
     ax.set_ylabel("Sentiment")
-    st.pyplot(fig)
+    left.pyplot(fig)
 
-video_widget = st.video(raw_bytes)
 
 
