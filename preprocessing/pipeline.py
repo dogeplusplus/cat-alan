@@ -1,8 +1,7 @@
-import os
-import glob
 import torch
 import torchaudio
 
+from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, random_split
 from audiomentations import Compose, TimeStretch, PitchShift, AddGaussianNoise
 
@@ -11,15 +10,14 @@ class SoundDataset(Dataset):
     def __init__(self, sound_dir, transforms=None):
         self.sound_dir = sound_dir
         self.classes = {
-            x: i for i, x in enumerate(os.listdir(sound_dir))
+            x.name : i for i, x in enumerate(sound_dir.iterdir())
         }
 
         self.files = []
         self.transforms = transforms
 
-        for ext in ("wav", "mp3"):
-            self.files.extend(glob.glob(os.path.join(
-                self.sound_dir, f"**/*.{ext}"), recursive=True))
+        for ext in ("*.wav", "*.mp3"):
+            self.files.extend(Path(self.sound_dir).rglob(ext))
 
     def __len__(self):
         return len(self.files)
@@ -28,7 +26,7 @@ class SoundDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        class_name = os.path.basename(os.path.dirname(self.files[idx]))
+        class_name = Path(self.files[idx]).parent.name
         label = self.classes[class_name]
         waveform, _ = torchaudio.load(self.files[idx])
 
@@ -62,18 +60,18 @@ def load_dataset(sound_dir, batch_size=2, train_ratio=0.8):
         AddGaussianNoise(0.001, 0.015, p=0.5),
     ])
 
-    if os.listdir(sound_dir) == ["test", "train"]:
-        train_set = SoundDataset(f"{sound_dir}/train", augmentations)
-        test_set = SoundDataset(f"{sound_dir}/test")
+    if list(Path(sound_dir).iterdir()) == ["test", "train"]:
+        train_set = SoundDataset(Path(sound_dir, "train"), augmentations)
+        test_set = SoundDataset(Path(sound_dir, "test"))
     else:
-        dataset = SoundDataset(sound_dir)
+        dataset = SoundDataset(Path(sound_dir))
         train_size = int(len(dataset) * train_ratio)
         test_size = len(dataset) - train_size
         train_set, test_set = random_split(dataset, [train_size, test_size])
 
     train_dataset = DataLoader(
-        train_set, batch_size=batch_size, collate_fn=collate_fn)
+        train_set, batch_size=batch_size, collate_fn=collate_fn, num_workers=8)
     test_dataset = DataLoader(
-        test_set, batch_size=batch_size, collate_fn=collate_fn)
+        test_set, batch_size=batch_size, collate_fn=collate_fn, num_workers=8)
 
     return train_dataset, test_dataset

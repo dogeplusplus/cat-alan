@@ -18,3 +18,7 @@ tensorboard:
 dvc:
 	dvc init
 	dvc remote add --default gdrive ${DVC_REMOTE}
+
+.PHONY: mlflow
+mlflow:
+	mlflow ui

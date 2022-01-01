@@ -1,4 +1,3 @@
-import os
 import uuid
 import tqdm
 import json
@@ -9,6 +8,7 @@ import torch.optim as optim
 import mlflow
 import mlflow.pytorch
 
+from pathlib import Path
 from models.m5 import M5
 from preprocessing.pipeline import load_dataset
 
@@ -22,10 +22,9 @@ DEFAULTS = dict(
 )
 
 
-def train(dataset_path, model, epochs, batch_size, device,
+def train(train_ds, test_ds, model, epochs, device,
           print_every=5, save_every=5):
 
-    train_ds, test_ds = load_dataset(dataset_path, batch_size)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
@@ -64,7 +63,7 @@ def train(dataset_path, model, epochs, batch_size, device,
                 ))
 
         mlflow.log_metric("train_loss", float(running_loss) / samples, step=e)
-        mlflow.log_metric("train_accuracy", float(running_correct) / samples)
+        mlflow.log_metric("train_accuracy", float(running_correct) / samples, step=e)
 
         # Test loop
         with torch.no_grad():
@@ -95,7 +94,7 @@ def train(dataset_path, model, epochs, batch_size, device,
                     ))
 
         mlflow.log_metric("test_loss", float(running_loss) / samples, step=e)
-        mlflow.log_metric("test_accuracy", float(running_correct) / samples)
+        mlflow.log_metric("test_accuracy", float(running_correct) / samples, step=e)
 
         if (e + 1) % save_every == 0:
             mlflow.pytorch.log_model(model, "model")
@@ -122,8 +121,8 @@ def main(args):
             args[parameter] = DEFAULTS[parameter]
 
     num_classes = 0
-    for maybe_class in os.listdir(dataset_path):
-        if os.path.isdir(os.path.join(dataset_path, maybe_class)):
+    for maybe_class in Path(dataset_path).iterdir():
+        if maybe_class.is_dir():
             num_classes += 1
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -137,7 +136,8 @@ def main(args):
         )
         mlflow.log_dict(args, "config.json")
         model.to(device)
-        train(dataset_path, model, args["epochs"], args["batch_size"], device)
+        train_ds, test_ds = load_dataset(dataset_path, args["batch_size"])
+        train(train_ds, test_ds, model, args["epochs"], device)
 
 
 if __name__ == "__main__":
