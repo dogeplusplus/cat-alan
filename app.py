@@ -11,7 +11,7 @@ from tempfile import TemporaryDirectory
 
 device = "cpu"
 model_path = "examples/model"
-model = mlflow.pytorch.load_model(model_path)
+model = mlflow.pytorch.load_model(model_path, map_location="cpu")
 # Switch off dropout
 model.eval()
 
