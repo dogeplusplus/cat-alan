@@ -40,6 +40,7 @@ def predict(model, audio):
 
 
 st.title("Meow Sentiment Analysis")
+st.write("`cat-alan` is an audio-classification model based on the M5 architecture. Uploading audio/video files, the model attempts to predict the emotion of the cat when speaking.")
 st.sidebar.subheader("Provide Audio or Video file")
 uploaded_file = st.sidebar.file_uploader("File Path", type=["mp4", "mp3", "wav"])
 
