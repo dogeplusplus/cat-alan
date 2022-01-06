@@ -9,11 +9,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 
-device = "cpu"
-model_path = "examples/model"
-model = mlflow.pytorch.load_model(model_path, map_location="cpu")
-# Switch off dropout
-model.eval()
+@st.cache(suppress_st_warning=True)
+def load_model():
+    model_path = "examples/model"
+    model = mlflow.pytorch.load_model(model_path, map_location="cpu")
+    # Switch off dropout
+    model.eval()
+    return model
 
 classes = {
     0: "Happy",
@@ -30,6 +32,7 @@ classes = {
 
 
 def preprocess_audio(audio):
+    device = "cpu"
     mono = torch.mean(audio, axis=0, keepdim=True)
     reshaped = torch.unsqueeze(mono, 0)
     return reshaped.to(device)
@@ -46,6 +49,7 @@ st.write("`cat-alan` is an audio-classification model based on the M5 architectu
 st.sidebar.subheader("Provide Audio or Video file")
 uploaded_file = st.sidebar.file_uploader("File Path", type=["mp4", "mp3", "wav"])
 
+model = load_model()
 left, right = st.columns([2, 1])
 
 if uploaded_file is not None:
